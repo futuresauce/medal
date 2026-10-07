@@ -1,0 +1,13 @@
+{
+  "name": "websitemedal",
+  "version": "21.0.0",
+  "private": true,
+  "description": "Medal landing — 3D chip intro, EN/RU, Netlify-ready static build",
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "start": "node scripts/serve.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
