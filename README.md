@@ -1,74 +1,98 @@
-# Medal — сайт / website (v21)
+# play.medal.poker — front-end build v3 (9 Oct 2026)
 
-Лендинг Medal на новом дизайне: 3D-фишки, собирающиеся в логотип, освещение, печатание текста,
-повторные появления блоков, TGS-кот. Плюс всё, что было на действующем сайте medal.app:
-EN/RU с автоопределением языка, манифест «Where the Winner Went», лайтбокс скриншотов,
-определение Telegram, SEO/OG/JSON-LD, 404, заголовки безопасности для Netlify — и мобильная версия.
+Browser version of the Medal Telegram Mini App, built as the front-end body for the developers.
+No backend, no build step: open `index.html` in a browser (hash routes) or deploy the folder (clean URLs). All numbers are placeholder data.
 
-English notes are at the bottom.
+## Files
 
-## Быстрый просмотр
-
-```sh
-npm run build
-npm start
+```
+index.html      markup for every screen (one page, hash-routed) + inline icon sprite
+styles.css      design tokens, components, responsive rules
+app.js          sample data, router, guest/sign-in state, chat rail + auto-translate, lobby, table, games, giveaways, inventory
+assets/         brand marks (emblem, wordmark, lockup), game art crops from the Figma, full 52-card deck (card-{rank}{S|H|D|C}.webp)
+build_icons.py  regenerates the icon sprite (Phosphor / Tabler / Game Icons / flag-icons, see Icons)
+robots.txt      Disallow all — keep while this is a test deployment
+_headers        Netlify / Cloudflare Pages headers: noindex + basic hardening
+_redirects      SPA fallback (`/* /index.html 200`) so /poker, /table/t2 … load directly
+icon-sources/   Iconify dumps of Phosphor, Tabler, Game Icons and flag-icons used by build_icons.py
 ```
 
-Откройте http://127.0.0.1:4173/ (Node.js 18+, npm-зависимостей нет). Остановить сервер: Ctrl+C.
-Если порт занят, задайте переменную `PORT`.
+## URLs: with or without the `#`
 
-`dist/` — готовый сайт из нескольких файлов. На Netlify достаточно перетащить папку `dist/`
-(или zip с её содержимым). `_headers`, `404.html`, `site.webmanifest`, `robots.txt`, `sitemap.xml`
-создаются сборкой.
+Both work. Served from a real origin, the app uses clean paths (`/poker`, `/table/t2`, `/giveaway/g1`) through the History API;
+the `_redirects` file makes the host serve `index.html` for every path (Cloudflare Pages and Netlify read it as-is; on nginx use
+`try_files $uri /index.html;`). Opened as a local file, or on a host without that rule, it falls back to hash routes
+(`#poker`, `#table-t2`). Old `#` links are redirected to the clean path on load. The switch is the `data-routing="path"`
+attribute on `#frame`; remove it to force hash routing.
 
-## Структура
+## Putting it on a domain for viewing
 
-- `src/i18n.cjs` — все тексты EN/RU. Ключи должны совпадать в обоих словарях; сборка предупредит,
-  если в RU чего-то нет (тогда покажется английский текст, но никогда — «сырой» id).
-- `src/theme.css` — токены: цвета, шрифты, единица `--u` (1px при ширине 1920, с clamp для
-  планшетов и телефонов).
-- `src/page.css` — раскладка и компоненты; в конце — правила для узких экранов.
-- `src/page.js` — прокрутка, печатание текста, появления, переключение языка, лайтбокс,
-  уведомление «документы закрыты», манифест, Telegram-режим, кот.
-- `src/scene.js` — 3D-фишки, реакция на курсор, освещение и переход в логотип. Фишки собираются
-  там, где CSS расположил SVG-логотип, поэтому макет можно двигать без правки сцены.
-- `src/logo-points.json` — точки логотипа.
-- `scripts/build.cjs` — разметка страницы и сборка `dist/`. Ссылки, версия кеша (`VERSION`) и
-  флаг полосы «More ways to play» (`SHOW_STORE_STRIP`) — в начале файла.
-- `scripts/serve.cjs` — локальный сервер для `dist/`.
-- `assets/` — иконки и SVG, скриншоты (`img/screen-*` для коллажа, `img/shot-*` для лайтбокса),
-  QR, OG-картинка, кот (`anim/cat.tgs` + `cat.json` как запасной вариант), шрифт Inter
-  (`fonts/InterVariable-subset.woff2` — латиница + кириллица, 91 КБ; оригинал рядом).
-- `vendor/` — Three.js и Lottie.
+The folder is a static site: upload it as-is, nothing to compile.
 
-## Правила по текстам (из брифа проекта)
+1. **Cloudflare Pages (recommended).** Cloudflare already fronts medal.app / medal.poker. Pages → Create → *Upload assets* → drop the `play-medal-poker` folder. You get `<project>.pages.dev` in about a minute. Then *Custom domains* → add `play.medal.poker` (or `preview.medal.poker`); because the zone is in the same account Cloudflare writes the CNAME itself. To keep it team-only, add a Zero Trust Access policy (free up to 50 users, email one-time code) in front of the hostname.
+2. **Netlify (what medal.app used before).** Drag the folder onto app.netlify.com → `*.netlify.app` URL → *Domain settings* → add `play.medal.poker` → create the CNAME in Cloudflare DNS pointing at the Netlify subdomain. Password protection needs a paid plan, so use option 1's Access policy if it must stay private.
+3. **Sub-path of the existing site.** Copy the folder into the current site's `dist/play/` and redeploy → `medal.app/play/`. No DNS, but it mixes the concept with production.
 
-- Английская версия может нести заявление «not-for-profit»; русская остаётся проще
-  («Игровое мини-приложение в Telegram»).
-- По-русски: «Фишки Medal», «Платная ставка», «Карточные игры» (никогда «Дурак»).
-- Экономика — только как цель («Цель: 90–95% …»).
-- Документы остаются закрытыми, пока их не опубликуют (кнопки показывают уведомление).
+The page sets `noindex` in both the HTML and `_headers`, so search engines will not pick up the test. The Google Fonts request (Rubik) works on any real domain. The real Telegram Login only works once `https://play.medal.poker` is registered in @BotFather, which is not needed for a viewing test.
 
-## Как менять
+## Screens (hash routes)
 
-- Тексты: `src/i18n.cjs`, затем `npm run build`.
-- Ссылки (Telegram, канал, соцсети, почта): `LINKS` в `scripts/build.cjs`.
-- Список «Что уже доступно / Дальше»: `LIVE_ITEMS`, `COMING_ITEMS` там же.
-- Встроенный скрипт в `<head>` (определение Telegram) подписан хешем в `_headers`; сборка
-  пересчитывает его сама.
-- Отправляя обновление, увеличьте `VERSION` — суффикс `?v=N` сбрасывает кеш CSS/JS/OG.
-- Новые скриншоты: проверьте, что на них нет пользовательских названий розыгрышей и ников.
+`#hub` · `#poker` (lobby) · `#table` (poker table) · `#games` · `#blackjack` · `#ring` · `#roulette` · `#chaos` · `#durak` ·
+`#giveaways` · `#giveaway` (detail) · `#leaders` (boards + events) · `#inventory` · `#profile`
 
-## English notes
+Modals: Telegram sign-in, wallet (deposit / withdraw), buy-in, chat rules, concept notes.
 
-- `npm run build` renders `dist/` (multi-file, Netlify-ready: drag-drop the folder); `npm start`
-  serves it at http://127.0.0.1:4173/. Node 18+, no dependencies.
-- Copy lives in `src/i18n.cjs` (EN + RU, keys must match). Links, the cache-busting `VERSION`
-  and the optional store strip are at the top of `scripts/build.cjs`.
-- Layout: desktop keeps the designer's 1920-px composition (everything scales with `--u`);
-  below 1024 px the page reflows, with phone rules at 760/520 px. The 3D intro runs in a lighter
-  mode on phones and has a safety net: if the finale never completes, the logo appears and
-  scrolling is released after 6 s.
-- The inline `<head>` script is hashed into the CSP in `_headers` by the build.
-- `?lang=ru` / `?lang=en` force a language; the choice is remembered; otherwise the browser
-  language decides.
+## Telegram gifts / NFTs
+
+Gift tiles render from `img` (a PNG/WebP render on a radial backdrop) or fall back to an emoji. `assets/gift-pepe.webp` is the
+example render (Plush Pepe, cut from the team’s giveaway banner). In production use the gift’s own image from the Telegram
+Gifts API and the real Model / Symbol / Backdrop attributes; the floor value comes from the marketplace feed.
+
+## Guest mode
+
+Every screen renders for guests. Anything that needs an account carries `data-gate` (or is one of the
+gated actions listed in `app.js`): for a guest it opens the sign-in modal instead of acting, and remembers
+a pending seat so the buy-in continues after sign-in.
+
+## Chat auto-translate
+
+The chat header is one row: a channel dropdown (Global · Poker · Русский · chat rules), the translate button and collapse.
+Translate opens a toggle plus a target language (EN, RU, ZH, AR, FA, ES, TR, DE), remembered per device; the button shows the
+target flag while it is on, and picking a UI language in the top bar sets the same target.
+Each message carries `lang` and a `tr` map of translations. When the toggle is on, a message in another language shows
+`tr[target]` with a `RU → EN` tag; tapping the tag swaps back to the original. Messages without a translation show the original with a language tag.
+
+Production: detect the language on ingest, translate server-side on demand (DeepL, Google Cloud Translation or Azure Translator all handle these eight), cache per (messageId, target) so a message is translated once per language, and only translate for viewers who have the toggle on. Moderation runs on the original text. The same component serves the per-table chat.
+
+## Icons
+
+The sprite inside `index.html` is generated by `build_icons.py` from the Iconify dumps in `icon-sources/` (fetched once; re-run the
+script after editing the icon map). Weights: **Phosphor Bold** for secondary icons, **Phosphor Fill** for active nav, wallet, currency
+chips and CTAs (`i-<name>` / `i-<name>-fill`; `.is-active` swaps to the filled glyph). Tabler supplies `swords`, Game Icons supplies the
+GRAM gem (`cut-diamond`), the MEDAL shield-chip is a custom mark. Flags are `f-<cc>` symbols from lipis/flag-icons (4x3), used in the
+language menu, the chat translate menu and the profile.
+
+Licenses: Phosphor Icons MIT · Tabler Icons MIT · Game Icons CC BY 3.0 (credit game-icons.net in the site’s credits/footer) · flag-icons MIT.
+
+## Hooks for the real implementation
+
+| Area | Where | What to do |
+|------|-------|------------|
+| Sign-in | `simulateLogin()` in `app.js` | Replace with the Telegram Login library (`Telegram.Login.init/auth`), verify the ID token server-side, then call `applyAuth()` with the real user. |
+| Wallet | `connect-wallet` action | TON Connect wallet picker; GRAM deposit/withdraw endpoints. MEDAL is not purchasable. |
+| Tables | `TABLES` array, `renderLobby()`, `renderTable()` | Lobby list from the table service; table state (seats, board, pot, acting seat, timers) over WebSocket. |
+| Chat | `CHAT`, `pushMsg()`, `sendChat()`, `applyTranslate()` | Global / Poker / RU channels, per-table chat, translation map per message. Moderation flags not built. |
+| Games | `#blackjack #ring #roulette #chaos #durak` sections | Static game stages with bet boxes (`[data-betbox]`, chip strip, currency tabs). Replace with the game engines. |
+| Giveaways | `GIVEAWAYS`, `renderGifts()`, `renderParticipants()` | Rounds, Rejoin Shield, invite links. |
+| Inventory | `NFTS`, `renderNfts()` | Telegram Gift collectibles; withdraw confirmation is in-page. |
+| Earn | `claim` / `promo` actions | Free MEDAL every 8h, daily bonus checks, referral share. |
+| Languages | `setLang()` / `[data-lang]` | Sets `<html lang>`/`dir` and the chat target; English copy only. Add the EN/RU/ZH/AR/FA dictionary and swap strings at render time. |
+| Game actions | `actionToast()` | Deal / Hit / Stand / Join round / Create room / Red-Green-Black show feedback toasts; replace with the game engines. |
+
+## Design tokens (from the Mini App redesign)
+
+Ground `#0b0c10` · card `#0f1014` · input `#15161b` · primary `#4e80ff` · bright CTA `#1684ff` ·
+positive/go `#9bda1b` · danger `#f04040` · unique `#d642fb` · Telegram `#2aabee` · felt `#32598b`. Type: Rubik (Google Fonts), tabular numerals in tables.
+
+Layout: sticky 64px top bar, collapsible 300px chat rail (Duel-style; overlay below 1100px), content up to 1320px.
+Below 760px the bottom nav mirrors the Mini App (Hub · Poker · Games · Gifts · Leaders).
