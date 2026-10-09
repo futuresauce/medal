@@ -1,2 +1,9 @@
+# Cloudflare: files not uploaded as static assets (everything else at the repo root is the site)
 node_modules
 *.zip
+src
+server
+tools
+dist
+README.md
+.gitignore

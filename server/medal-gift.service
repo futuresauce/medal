@@ -1,0 +1,17 @@
+# /etc/systemd/system/medal-gift.service
+[Unit]
+Description=Medal gift resolver (Telethon + FastAPI)
+After=network-online.target
+
+[Service]
+User=medal
+WorkingDirectory=/srv/medal/server
+EnvironmentFile=/srv/medal/server/.env
+ExecStart=/srv/medal/server/.venv/bin/uvicorn gift_api:app --host 127.0.0.1 --port 8787 --proxy-headers
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

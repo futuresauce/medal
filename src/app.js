@@ -451,16 +451,16 @@
       const dealerStyle = pi === 0 ? 'left:-6px;top:-10px' : pi === topSeat ? 'left:-6px;bottom:-10px' : (x < 50 ? 'right:-8px;bottom:-8px' : 'left:-8px;bottom:-8px');
       return `<div class="seat ${isHero ? 'seat--hero' : ''} ${i === acting ? 'is-acting' : ''} ${!inHand ? 'is-away' : ''}" style="left:${x}%;top:${y}%">
         <div class="seat__pod">${avatar(name)}<div class="seat__info"><b>${esc(name)}</b><span>${icon(t.cur === 'GRAM' ? 'gram' : 'medal')}${fmt(stack, t.cur)}</span></div>
-          ${isHero ? `<div class="seat__cards"><img src="/assets/card-QD.webp" alt="Queen of diamonds"><img src="/assets/card-QS.webp" alt="Queen of spades"></div>` : inHand ? `<div class="seat__cards"><span class="cardback"></span><span class="cardback"></span></div>` : ''}
+          ${isHero ? `<div class="seat__cards"><img src="assets/card-QD.webp" alt="Queen of diamonds"><img src="assets/card-QS.webp" alt="Queen of spades"></div>` : inHand ? `<div class="seat__cards"><span class="cardback"></span><span class="cardback"></span></div>` : ''}
           ${i === dealer ? `<span class="seat__dealer" style="${dealerStyle}">D</span>` : ''}
           ${bet ? `<span class="seat__bet" style="${betStyle}"><i class="chipdot"></i>${fmt(bet, t.cur)}</span>` : ''}
         </div>
         ${isHero ? '<span class="seat__tag">Pair</span>' : !inHand ? '<span class="seat__tag seat__tag--fold">sitting out</span>' : i === acting ? '<span class="seat__tag">thinking…</span>' : ''}
       </div>`;
     }).join('');
-    return `<div class="felt__inner"></div><img class="felt__logo" src="/assets/wordmark.png" alt="">
+    return `<div class="felt__inner"></div><img class="felt__logo" src="assets/wordmark.png" alt="">
       <div class="pot"><span>Total pot</span><b>${fmt(pot, t.cur)}</b></div>
-      <div class="board">${['KC', '6D', 'JH'].map((c) => `<img src="/assets/card-${c}.webp" alt="">`).join('')}<span class="cardback"></span><span class="cardback"></span></div>
+      <div class="board">${['KC', '6D', 'JH'].map((c) => `<img src="assets/card-${c}.webp" alt="">`).join('')}<span class="cardback"></span><span class="cardback"></span></div>
       <div class="seats">${seats}</div>`;
   }
   function actionbarHTML(t) {
@@ -643,7 +643,7 @@
   }
 
   /* ---------------------------------------------------------- leaders / gifts / nfts */
-  const giftTile = (g, cls) => `<span class="gifttile ${cls || ''} ${g.img ? 'gifttile--img' : ''}" style="--g1:${g.g1};--g2:${g.g2}">${g.img ? `<img src="/assets/${g.img}.webp" alt="">` : g.emoji}</span>`;
+  const giftTile = (g, cls) => `<span class="gifttile ${cls || ''} ${g.img ? 'gifttile--img' : ''}" style="--g1:${g.g1};--g2:${g.g2}">${g.img ? `<img src="assets/${g.img}.webp" alt="">` : g.emoji}</span>`;
   function renderLeaders() {
     const b = LEADERS[state.lb]; if (!b) return;
     $('#lbTitle').textContent = b.title;

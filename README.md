@@ -1,22 +1,23 @@
 # play.medal.poker — front-end build v5 (9 Oct 2026)
 
 Browser version of the Medal Telegram Mini App, built as the front-end body for the developers.
-Static front-end plus one small backend (the Telegram gift resolver). Deploy `site/` at a domain root; run `server/` on the VPS. All game numbers are placeholder data.
+Static front-end (this repo's root) plus one small backend (`server/`, the Telegram gift resolver, runs on the VPS). All game numbers are placeholder data.
 
-## Files
+## Files (this repository — github.com/futuresauce/medal)
+
+The repository root **is** the deployable site, so a host pointed at the root (Cloudflare Workers / Pages, Netlify, GitHub Pages)
+serves it with no build step. Edit the sources in `src/`, run `python3 tools/build.py`, commit.
 
 ```
-site/             DEPLOY THIS FOLDER at the domain root (asset paths are root-absolute so /table/t2 and /gift/… work)
-  index.html      markup for every screen + inline icon sprite
-  styles.css      design tokens, components, responsive rules
-  app.js          data arrays, router, guest/sign-in state, chat + auto-translate, lobby, table, games, giveaways, inventory, gift page
-  assets/         brand marks, game art crops from the Figma, 52-card deck (card-{rank}{S|H|D|C}.webp), gift-pepe.webp
-  robots.txt      Disallow all — keep while this is a test deployment
-  _headers        Netlify / Cloudflare Pages headers: noindex + basic hardening
-  _redirects      SPA fallback (`/* /index.html 200`) so clean URLs load directly
-server/           Telegram gift resolver (FastAPI + Telethon) — see below
-src/              the same three source files with relative paths (double-click index.html to preview locally)
-tools/            build.py (makes site/ from src/), build_icons.py + icon-sources/ (regenerates the sprite)
+index.html, styles.css, app.js   built from src/ with root-absolute paths (so /table/t2 and /gift/… load assets)
+404.html                         copy of index.html: hosts that serve 404.html for unknown paths still boot the app on deep links
+assets/                          brand marks, game art crops from the Figma, 52-card deck (card-{rank}{S|H|D|C}.webp), gift-pepe.webp
+robots.txt                       Disallow all — keep while this is a test deployment
+_headers                         Netlify / Cloudflare headers: noindex + basic hardening
+.assetsignore                    Cloudflare: keeps src/, server/, tools/ and zips out of the uploaded assets
+src/                             index.html · styles.css · app.js with relative paths (double-click index.html to preview locally)
+tools/                           build.py (src/ → root files + dist/preview.html), build_icons.py + icon-sources/ (regenerates the icon sprite)
+server/                          Telegram gift resolver (FastAPI + Telethon) — see below
 ```
 
 ## URLs: with or without the `#`
@@ -27,15 +28,40 @@ the `_redirects` file makes the host serve `index.html` for every path (Cloudfla
 (`#poker`, `#table-t2`). Old `#` links are redirected to the clean path on load. The switch is the `data-routing="path"`
 attribute on `#frame`; remove it to force hash routing.
 
+Deep links on a refresh need the host to fall back to the app: **Cloudflare Workers** (static assets) → Settings → Assets →
+*Not found handling: Single-page application* (or `"not_found_handling": "single-page-application"` in `wrangler.jsonc`);
+**Cloudflare Pages / Netlify** → add a `_redirects` file at the root containing `/*  /index.html  200`; **GitHub Pages** → nothing,
+it serves `404.html`, which is a copy of the app.
+
 ## Putting it on a domain for viewing
 
-The folder is a static site: upload it as-is, nothing to compile.
+The root of this repo is a static site: nothing to compile.
 
-1. **Cloudflare Pages (recommended).** Cloudflare already fronts medal.app / medal.poker. Pages → Create → *Upload assets* → drop the `play-medal-poker` folder. You get `<project>.pages.dev` in about a minute. Then *Custom domains* → add `play.medal.poker` (or `preview.medal.poker`); because the zone is in the same account Cloudflare writes the CNAME itself. To keep it team-only, add a Zero Trust Access policy (free up to 50 users, email one-time code) in front of the hostname.
-2. **Netlify (what medal.app used before).** Drag the folder onto app.netlify.com → `*.netlify.app` URL → *Domain settings* → add `play.medal.poker` → create the CNAME in Cloudflare DNS pointing at the Netlify subdomain. Password protection needs a paid plan, so use option 1's Access policy if it must stay private.
-3. **Sub-path of the existing site.** Copy the folder into the current site's `dist/play/` and redeploy → `medal.app/play/`. No DNS, but it mixes the concept with production.
+1. **Cloudflare (recommended; the zone for medal.poker is already there).** Workers & Pages → Create → *Connect to Git* → this repo.
+   Build command **empty**, deploy/output directory **`/`** (the root). Then *Custom domains* → add `play.medal.poker`; Cloudflare
+   writes the CNAME itself. Keep it team-only with a Zero Trust Access policy (free up to 50 users, email one-time code).
+   Every push to `main` redeploys. Turn on single-page-application not-found handling as described above.
+2. **Netlify.** *Import from Git* → this repo → publish directory `/`, no build command → `*.netlify.app` → *Domain settings* →
+   add `play.medal.poker` → CNAME in Cloudflare DNS. Add `_redirects` (`/*  /index.html  200`) for clean deep links.
+3. **GitHub Pages.** Repo *Settings → Pages → Deploy from branch → main / (root)*. Deep links work through `404.html`.
 
-The page sets `noindex` in both the HTML and `_headers`, so search engines will not pick up the test. The Google Fonts request (Rubik) works on any real domain. The real Telegram Login only works once `https://play.medal.poker` is registered in @BotFather, which is not needed for a viewing test. Deploy `site/` at the **root** of the hostname (paths are `/assets/…`); for a sub-path deployment add `<base href="/play/">` and change the paths.
+The page sets `noindex` in both the HTML and `_headers`, so search engines will not pick up the test. The Google Fonts request
+(Rubik) works on any real domain. The real Telegram Login only works once `https://play.medal.poker` is registered in @BotFather,
+which is not needed for a viewing test. Deploy at the **root** of a hostname (paths are `/assets/…`); for a sub-path deployment
+add `<base href="/play/">` and change the paths.
+
+## Working on it
+
+```bash
+# edit src/index.html, src/styles.css, src/app.js — then rebuild the root files and commit
+python3 tools/build.py
+git add -A && git commit -m "describe the change" && git push
+```
+
+`tools/build.py` writes the root `index.html`/`styles.css`/`app.js`/`404.html` (root-absolute paths) and `dist/preview.html`
+(single file, relative paths, git-ignored). `tools/build_icons.py` regenerates the icon sprite inside `src/index.html` from
+`tools/icon-sources/` — run `build.py` afterwards. `.gitignore` keeps `dist/`, the resolver's `.env`, session files and cache out
+of the repo.
 
 ## Screens (routes)
 
@@ -60,7 +86,7 @@ python login.py             # phone → code → 2FA; writes gift.session (chmod
 uvicorn gift_api:app --host 127.0.0.1 --port 8787
 ```
 
-`medal-gift.service` is a systemd unit; `nginx-gift.conf` serves `site/` and proxies `/api/` on the same origin with a rate
+`medal-gift.service` is a systemd unit; `nginx-gift.conf` serves the site files and proxies `/api/` on the same origin with a rate
 limit. If the static site stays on Cloudflare Pages, run the API on `api.medal.poker` instead, set `ALLOWED_ORIGINS` and
 `PUBLIC_BASE=https://api.medal.poker/api` in `.env`, and point the front end at it with
 `<meta name="medal-api" content="https://api.medal.poker/api">` in `index.html`.
@@ -125,7 +151,7 @@ Production: detect the language on ingest, translate server-side on demand (Deep
 
 ## Icons
 
-The sprite inside `index.html` is generated by `build_icons.py` from the Iconify dumps in `icon-sources/` (fetched once; re-run the
+The sprite inside `src/index.html` is generated by `tools/build_icons.py` from the Iconify dumps in `tools/icon-sources/` (fetched once; re-run the
 script after editing the icon map). Weights: **Phosphor Bold** for secondary icons, **Phosphor Fill** for active nav, wallet, currency
 chips and CTAs (`i-<name>` / `i-<name>-fill`; `.is-active` swaps to the filled glyph). Tabler supplies `swords`, Game Icons supplies the
 GRAM gem (`cut-diamond`), the MEDAL shield-chip is a custom mark. Flags are `f-<cc>` symbols from lipis/flag-icons (4x3), used in the

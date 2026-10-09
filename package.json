@@ -1,13 +1,5 @@
 {
-  "name": "websitemedal",
-  "version": "21.0.0",
+  "name": "play-medal-poker",
   "private": true,
-  "description": "Medal landing — 3D chip intro, EN/RU, Netlify-ready static build",
-  "scripts": {
-    "build": "node scripts/build.cjs",
-    "start": "node scripts/serve.cjs"
-  },
-  "engines": {
-    "node": ">=18"
-  }
+  "description": "play.medal.poker — browser version of the Medal Telegram Mini App. Static site at the repo root; edit src/ and run python3 tools/build.py."
 }

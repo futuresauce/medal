@@ -1,0 +1,13 @@
+# build output (regenerate with tools/build.py); keep site/ committed if you deploy straight from the repo
+dist/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+
+# gift resolver secrets — never commit
+server/.env
+server/*.session
+server/*.session-journal
+server/cache/
+server/.venv/
